@@ -1,0 +1,47 @@
+name: "Push Docker Images"
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    push:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v4
+
+            - name: Setup QEMU
+              uses: docker/setup-qemu-action@v3
+
+            - name: Set up Docker Buildx
+              id: buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Login to GitHub Packages
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and Push Docker Image (default)
+              uses: docker/build-push-action@v6
+              with:
+                  push: true
+                  platforms: linux/amd64,linux/arm64
+                  tags: |
+                      ghcr.io/${{ github.actor }}/tshock:latest
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Build and Push Docker Image (alpine)
+              uses: docker/build-push-action@v6
+              with:
+                  push: true
+                  platforms: linux/amd64,linux/arm64
+                  tags: |
+                      ghcr.io/${{ github.actor }}/tshock:alpine
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
