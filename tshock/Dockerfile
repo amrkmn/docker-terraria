@@ -34,7 +34,7 @@ RUN set -eux; \
     chmod +x /tshock/TShock.Server
 
 # Main image setup
-FROM mcr.microsoft.com/dotnet/runtime:6.0
+FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine
 
 # Expose ports
 EXPOSE 7777 7878
