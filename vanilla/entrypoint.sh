@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo "Bootstrap:"
-echo "world_file_name=$WORLD_FILENAME"
+echo "world=$WORLD"
 echo "logpath=$LOGPATH"
 
 # Define paths
-WORLD_PATH="$WORLDPATH/$WORLD_FILENAME"
+WORLD_PATH="$WORLDPATH/$WORLD"
 
 # Check for server configuration
 if [ ! -f "$CONFIGPATH/$CONFIG_FILENAME" ]; then
@@ -15,8 +15,8 @@ if [ ! -f "$CONFIGPATH/$CONFIG_FILENAME" ]; then
 fi
 
 # Handle world file
-if [ -z "$WORLD_FILENAME" ]; then
-    echo "No world file specified in environment WORLD_FILENAME."
+if [ -z "$WORLD" ]; then
+    echo "No world file specified in environment WORLD."
     if [ -z "$@" ]; then
         echo "Running server setup without additional arguments..."
     else
@@ -24,9 +24,9 @@ if [ -z "$WORLD_FILENAME" ]; then
     fi
     mono TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" "$@"
 else
-    echo "Environment WORLD_FILENAME specified"
+    echo "Environment WORLD specified"
     if [ -f "$WORLD_PATH" ]; then
-        echo "Loading world file: $WORLD_FILENAME..."
+        echo "Loading world file: $WORLD..."
         mono TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -world "$WORLD_PATH" "$@"
     else
         echo "Unable to locate world file at $WORLD_PATH."

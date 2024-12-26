@@ -34,7 +34,7 @@ RUN set -eux; \
     chmod +x /tshock/TShock.Server
 
 # Main image setup
-FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine
+FROM mcr.microsoft.com/dotnet/runtime:6.0
 
 # Expose ports
 EXPOSE 7777 7878
@@ -42,7 +42,7 @@ EXPOSE 7777 7878
 # Define volumes using /data as the base directory
 VOLUME ["/data"]
 
-# Set working directory to /
+# Set working directory to /tshock
 WORKDIR /tshock
 
 # Copy server files from the /tshock directory to the final image
