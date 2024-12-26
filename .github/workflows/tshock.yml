@@ -3,6 +3,8 @@ name: "Push Docker Images"
 on:
     push:
         branches: [main]
+        paths:
+            - 'tshock/**'
     workflow_dispatch:
 
 jobs:
@@ -33,15 +35,5 @@ jobs:
                   platforms: linux/amd64,linux/arm64
                   tags: |
                       ghcr.io/${{ github.repository_owner }}/tshock:latest
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Build and Push Docker Image (alpine)
-              uses: docker/build-push-action@v6
-              with:
-                  push: true
-                  platforms: linux/amd64,linux/arm64
-                  tags: |
-                      ghcr.io/${{ github.repository_owner }}/tshock:alpine
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
