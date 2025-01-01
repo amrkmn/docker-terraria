@@ -10,14 +10,16 @@
 
 # Ensure all necessary directories exist
 for dir in "$CONFIGPATH" "$LOGPATH" "$CRASHDIR" "$WORLDSELECTPATH" "$ADDITIONALPLUGINS"; do
-    if [ ! -d "$dir" ]; then
-        echo "Creating directory: $dir"
-        mkdir -p "$dir"
-    fi
+    [ -d "$dir" ] || { echo "Creating directory: $dir"; mkdir -p "$dir"; }
 done
 
 # Map environment variables and default values to TShock parameters
 ARGS="-configpath $CONFIGPATH -logpath $LOGPATH -crashdir $CRASHDIR -worldselectpath $WORLDSELECTPATH -additionalplugins $ADDITIONALPLUGINS"
+
+# Validate boolean values
+validate_boolean() {
+    [[ "$1" == "true" || "$1" == "false" ]] && echo "$1" || echo "false"
+}
 
 [ -n "$IP" ] && ARGS="$ARGS -ip $IP"
 [ -n "$PORT" ] && ARGS="$ARGS -port $PORT"
@@ -26,16 +28,17 @@ ARGS="-configpath $CONFIGPATH -logpath $LOGPATH -crashdir $CRASHDIR -worldselect
 [ -n "$WORLDNAME" ] && ARGS="$ARGS -worldname $WORLDNAME"
 [ -n "$AUTOCREATE" ] && ARGS="$ARGS -autocreate $AUTOCREATE"
 [ -n "$CONFIG" ] && ARGS="$ARGS -config $CONFIG"
-[ -n "$IGNOREVERSION" ] && ARGS="$ARGS -ignoreversion"
-[ -n "$FORCEUPDATE" ] && ARGS="$ARGS -forceupdate"
 [ -n "$PASSWORD" ] && ARGS="$ARGS -pass $PASSWORD"
 [ -n "$MOTD" ] && ARGS="$ARGS -motd \"$MOTD\""
-[ -n "$AUTOSHUTDOWN" ] && ARGS="$ARGS -autoshutdown"
-[ -n "$SECURE" ] && ARGS="$ARGS -secure"
 [ -n "$LOGFORMAT" ] && ARGS="$ARGS -logformat $LOGFORMAT"
-[ -n "$LOGCLEAR" ] && ARGS="$ARGS -logclear"
 [ -n "$WORLD_EVIL" ] && ARGS="$ARGS -worldevil $WORLD_EVIL"
 [ -n "$DIFFICULTY" ] && ARGS="$ARGS -difficulty $DIFFICULTY"
+
+[ "$(validate_boolean "$IGNOREVERSION")" == "true" ] && ARGS="$ARGS -ignoreversion"
+[ "$(validate_boolean "$FORCEUPDATE")" == "true" ] && ARGS="$ARGS -forceupdate"
+[ "$(validate_boolean "$AUTOSHUTDOWN")" == "true" ] && ARGS="$ARGS -autoshutdown"
+[ "$(validate_boolean "$SECURE")" == "true" ] && ARGS="$ARGS -secure"
+[ "$(validate_boolean "$LOGCLEAR")" == "true" ] && ARGS="$ARGS -logclear"
 
 # Add any additional arguments passed to the container
 ARGS="$ARGS $@"
@@ -43,9 +46,6 @@ ARGS="$ARGS $@"
 echo "Starting TShock server with arguments: $ARGS"
 
 # Ensure the TShock directory exists, then execute the TShock server from the /tshock directory
-if [ ! -d "/tshock" ]; then
-    echo "Error: /tshock directory does not exist! Creating it..."
-    mkdir -p /tshock
-fi
+[ -d "/tshock" ] || { echo "Error: /tshock directory does not exist! Creating it..."; mkdir -p /tshock; }
 
 exec /tshock/TShock.Server $ARGS
