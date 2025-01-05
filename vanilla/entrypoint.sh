@@ -27,7 +27,7 @@ else
     echo "Environment WORLD specified"
     if [ -f "$WORLD_PATH" ]; then
         echo "Loading world file: $WORLD..."
-        mono TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -world "$WORLD_PATH" "$@"
+        mono --server --gc=sgen -O=all TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -world "$WORLD_PATH" "$@"
     else
         echo "Unable to locate world file at $WORLD_PATH."
         echo "Please ensure your world file is volumed into Docker: -v <path_to_world_file>:$WORLDPATH"

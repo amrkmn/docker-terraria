@@ -1,4 +1,4 @@
-FROM alpine:3.17.3 AS base
+FROM alpine:3.21.0 AS base
 
 # Install unzip and clean up after installation
 RUN apk add --no-cache unzip
@@ -36,7 +36,6 @@ VOLUME ["/data"]
 
 # Copy only required files from the build stage
 COPY --from=base /server/ /server/
-
 WORKDIR /server
 
-ENTRYPOINT [ "/bin/sh", "/server/entrypoint.sh" ]
+ENTRYPOINT ["/bin/sh", "/server/entrypoint.sh"]

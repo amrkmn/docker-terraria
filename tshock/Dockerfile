@@ -1,5 +1,5 @@
-# Base image setup
-FROM alpine:3.21.0 AS base
+# Base image setup with platform specification
+FROM --platform=${BUILDPLATFORM} alpine:3.21.0 AS base
 
 # Install dependencies
 RUN apk add --no-cache \
@@ -15,17 +15,19 @@ RUN chmod +x /tshock/entrypoint.sh
 # TShock version
 ENV TSHOCKVERSION=v5.2.1
 
-# Detect and download the correct TShock package based on the target platform
+# Make TARGETPLATFORM available to the container.
+ARG TARGETPLATFORM
+
+# Detect and download the correct TShock package based on the target platform using TARGETPLATFORM
 RUN set -eux; \
-    arch="$(apk --print-arch)"; \
-    case "$arch" in \
-        'x86_64') \
-            export TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-amd64-Release.zip'; \
+    case "${TARGETPLATFORM}" in \
+        'linux/amd64') \
+            TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-amd64-Release.zip'; \
             ;; \
-        'aarch64') \
-            export TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-arm64-Release.zip'; \
+        'linux/arm64') \
+            TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-arm64-Release.zip'; \
             ;; \
-        *) echo >&2 "error: unsupported architecture '$arch'."; exit 1 ;; \
+        *) echo >&2 "error: unsupported TARGETPLATFORM '${TARGETPLATFORM}'."; exit 1 ;; \
     esac; \
     curl -L -o /$TSHOCKZIP https://github.com/Pryaxis/TShock/releases/download/$TSHOCKVERSION/$TSHOCKZIP; \
     unzip /$TSHOCKZIP -d /tshock; \
@@ -33,8 +35,8 @@ RUN set -eux; \
     rm /$TSHOCKZIP; \
     chmod +x /tshock/TShock.Server
 
-# Main image setup
-FROM mcr.microsoft.com/dotnet/runtime:6.0
+# Main image setup with platform specification
+FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/runtime:6.0
 
 # Expose ports
 EXPOSE 7777 7878
