@@ -10,7 +10,10 @@
 
 # Ensure all necessary directories exist
 for dir in "$CONFIGPATH" "$LOGPATH" "$CRASHDIR" "$WORLDSELECTPATH" "$ADDITIONALPLUGINS"; do
-    [ -d "$dir" ] || { echo "Creating directory: $dir"; mkdir -p "$dir"; }
+    [ -d "$dir" ] || {
+        echo "Creating directory: $dir"
+        mkdir -p "$dir"
+    }
 done
 
 # Map environment variables and default values to TShock parameters
@@ -46,6 +49,9 @@ ARGS="$ARGS $@"
 echo "Starting TShock server with arguments: $ARGS"
 
 # Ensure the TShock directory exists, then execute the TShock server from the /tshock directory
-[ -d "/tshock" ] || { echo "Error: /tshock directory does not exist! Creating it..."; mkdir -p /tshock; }
+[ -d "/tshock" ] || {
+    echo "Error: /tshock directory does not exist! Creating it..."
+    mkdir -p /tshock
+}
 
 exec /tshock/TShock.Server $ARGS

@@ -13,7 +13,7 @@ COPY entrypoint.sh /tshock/entrypoint.sh
 RUN chmod +x /tshock/entrypoint.sh
 
 # TShock version
-ENV TSHOCKVERSION=v5.2.1
+ENV TSHOCKVERSION=5.2.3
 
 # Make TARGETPLATFORM available to the container.
 ARG TARGETPLATFORM
@@ -21,15 +21,15 @@ ARG TARGETPLATFORM
 # Detect and download the correct TShock package based on the target platform using TARGETPLATFORM
 RUN set -eux; \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') \
-            TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-amd64-Release.zip'; \
-            ;; \
-        'linux/arm64') \
-            TSHOCKZIP='TShock-5.2.1-for-Terraria-1.4.4.9-linux-arm64-Release.zip'; \
-            ;; \
-        *) echo >&2 "error: unsupported TARGETPLATFORM '${TARGETPLATFORM}'."; exit 1 ;; \
+    'linux/amd64') \
+    TSHOCKZIP="TShock-${TSHOCKVERSION}-for-Terraria-1.4.4.9-linux-amd64-Release.zip"; \
+    ;; \
+    'linux/arm64') \
+    TSHOCKZIP="TShock-${TSHOCKVERSION}-for-Terraria-1.4.4.9-linux-arm64-Release.zip"; \
+    ;; \
+    *) echo >&2 "error: unsupported TARGETPLATFORM '${TARGETPLATFORM}'."; exit 1 ;; \
     esac; \
-    curl -L -o /$TSHOCKZIP https://github.com/Pryaxis/TShock/releases/download/$TSHOCKVERSION/$TSHOCKZIP; \
+    curl -L -o /$TSHOCKZIP https://github.com/Pryaxis/TShock/releases/download/v$TSHOCKVERSION/$TSHOCKZIP; \
     unzip /$TSHOCKZIP -d /tshock; \
     tar -xvf /tshock/*.tar -C /tshock && rm /tshock/*.tar; \
     rm /$TSHOCKZIP; \
