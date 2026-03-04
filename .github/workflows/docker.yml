@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/vanilla-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'vanilla')
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -50,6 +50,18 @@ jobs:
           DL_VERSION="${DOTTED//./}"
           echo "dotted=$DOTTED" >> "$GITHUB_OUTPUT"
           echo "dl_version=$DL_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update ARG defaults in Dockerfile
+        run: |
+          sed -i "s/^ARG DL_VERSION=.*/ARG DL_VERSION=${{ steps.version.outputs.dl_version }}/" vanilla/Dockerfile
+
+      - name: Commit updated Dockerfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add vanilla/Dockerfile
+          git diff --cached --quiet || git commit -m "chore(vanilla): bump version to ${{ steps.version.outputs.dotted }}"
+          git push origin HEAD:main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -86,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/tshock-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'tshock')
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -110,6 +122,19 @@ jobs:
           echo "terraria=$TERRARIA" >> "$GITHUB_OUTPUT"
           echo "tshock=$TSHOCK" >> "$GITHUB_OUTPUT"
           echo "combined=${TERRARIA}-${TSHOCK}" >> "$GITHUB_OUTPUT"
+
+      - name: Update ARG defaults in Dockerfile
+        run: |
+          sed -i "s/^ARG TSHOCKVERSION=.*/ARG TSHOCKVERSION=${{ steps.version.outputs.tshock }}/" tshock/Dockerfile
+          sed -i "s/^ARG TERRARIA_VERSION=.*/ARG TERRARIA_VERSION=${{ steps.version.outputs.terraria }}/" tshock/Dockerfile
+
+      - name: Commit updated Dockerfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tshock/Dockerfile
+          git diff --cached --quiet || git commit -m "chore(tshock): bump version to ${{ steps.version.outputs.combined }}"
+          git push origin HEAD:main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
