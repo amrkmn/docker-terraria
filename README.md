@@ -32,7 +32,7 @@ docker run -d \
   --name terraria \
   -p 7777:7777 \
   -v /path/to/data:/data \
-  -e WORLD="MyWorld.wld" \
+  -e WORLD_FILENAME="MyWorld.wld" \
   ghcr.io/amrkmn/terraria:latest
 ```
 
@@ -44,7 +44,7 @@ docker run -d \
   -p 7777:7777 \
   -p 7878:7878 \
   -v /path/to/data:/data \
-  -e WORLD="MyWorld.wld" \
+  -e WORLD_FILENAME="MyWorld.wld" \
   ghcr.io/amrkmn/terraria/tshock:latest
 ```
 
@@ -62,7 +62,7 @@ services:
     volumes:
       - ./data:/data
     environment:
-      WORLD: "MyWorld.wld"
+      WORLD_FILENAME: "MyWorld.wld"
     restart: unless-stopped
 ```
 
@@ -72,7 +72,7 @@ services:
 
 | Variable | Default | Description |
 |---|---|---|
-| `WORLD` | _(empty)_ | World filename (e.g. `MyWorld.wld`). If unset, server starts in interactive setup mode. |
+| `WORLD_FILENAME` | _(empty)_ | World filename (e.g. `MyWorld.wld`). If unset, server starts in interactive setup mode. |
 | `WORLDPATH` | `/data/worlds` | Directory where world files are stored. |
 | `CONFIGPATH` | `/data/config` | Directory for the server config file. |
 | `CONFIG_FILENAME` | `serverconfig.txt` | Server config filename. |
@@ -82,7 +82,7 @@ services:
 
 | Variable | Default | Description |
 |---|---|---|
-| `WORLD` | _(empty)_ | World filename to load on startup. |
+| `WORLD_FILENAME` | _(empty)_ | World filename to load on startup. |
 | `WORLDNAME` | _(empty)_ | Name for a newly auto-created world. |
 | `AUTOCREATE` | _(empty)_ | World size for auto-creation: `1` (small), `2` (medium), `3` (large). |
 | `PORT` | _(empty)_ | Server port (default `7777`). |
@@ -118,6 +118,15 @@ Both images use `/data` as the base volume. Mount a host directory there to pers
 
 > [!NOTE]
 > On first run, if no config file is found, the vanilla image will copy a default `serverconfig.txt` into `/data/config` automatically.
+
+> [!NOTE]
+> On first run, the TShock image will seed `/data/plugins` with the default bundled plugins. Add your own plugins to the same directory.
+
+> [!IMPORTANT]
+> Both images run as a non-root user with UID/GID `1000`. If you bind-mount a host directory (e.g. `-v /host/path:/data`), ensure it is owned by UID `1000`, otherwise the server will fail to write logs and world files:
+> ```sh
+> sudo chown -R 1000:1000 /host/path
+> ```
 
 ## Releasing a New Version
 
