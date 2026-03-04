@@ -1,57 +1,49 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
-# Base directory for all paths
-: "${BASE_DIR:=/data}"
-: "${CONFIGPATH:=$BASE_DIR/config}"
-: "${LOGPATH:=$BASE_DIR/logs}"
-: "${CRASHDIR:=$BASE_DIR/crashes}"
-: "${WORLDSELECTPATH:=$BASE_DIR/worlds}"
-: "${ADDITIONALPLUGINS:=$BASE_DIR/plugins}"
+# Seed plugins from the baked-in snapshot on first run.
+# /tshock-plugins contains the default plugins from the image.
+# /data/plugins is the user-facing volume — empty on a fresh mount.
+if [ -z "$(ls -A "$ADDITIONALPLUGINS" 2>/dev/null)" ]; then
+    echo "Seeding default plugins into $ADDITIONALPLUGINS"
+    mkdir -p "$ADDITIONALPLUGINS"
+    cp -r /tshock-plugins/. "$ADDITIONALPLUGINS/"
+fi
 
 # Ensure all necessary directories exist
-for dir in "$CONFIGPATH" "$LOGPATH" "$CRASHDIR" "$WORLDSELECTPATH" "$ADDITIONALPLUGINS"; do
-    [ -d "$dir" ] || {
-        echo "Creating directory: $dir"
-        mkdir -p "$dir"
-    }
+for dir in "$CONFIGPATH" "$LOGPATH" "$CRASHDIR" "$WORLDSELECTPATH"; do
+    [ -d "$dir" ] || mkdir -p "$dir"
 done
 
-# Map environment variables and default values to TShock parameters
-ARGS="-configpath $CONFIGPATH -logpath $LOGPATH -crashdir $CRASHDIR -worldselectpath $WORLDSELECTPATH -additionalplugins $ADDITIONALPLUGINS"
+# Build argument list from environment variables.
+# Use a positional parameter set to avoid word-splitting issues with values
+# that may contain spaces (e.g. MOTD, paths).
+set -- \
+    -configpath "$CONFIGPATH" \
+    -logpath "$LOGPATH" \
+    -crashdir "$CRASHDIR" \
+    -worldselectpath "$WORLDSELECTPATH" \
+    -additionalplugins "$ADDITIONALPLUGINS"
 
-# Validate boolean values
-validate_boolean() {
-    [[ "$1" == "true" || "$1" == "false" ]] && echo "$1" || echo "false"
-}
+[ -n "$IP" ]             && set -- "$@" -ip "$IP"
+[ -n "$PORT" ]           && set -- "$@" -port "$PORT"
+[ -n "$MAXPLAYERS" ]     && set -- "$@" -maxplayers "$MAXPLAYERS"
+[ -n "$WORLD_FILENAME" ] && set -- "$@" -world "$WORLDSELECTPATH/$WORLD_FILENAME"
+[ -n "$WORLDNAME" ]      && set -- "$@" -worldname "$WORLDNAME"
+[ -n "$AUTOCREATE" ]     && set -- "$@" -autocreate "$AUTOCREATE"
+[ -n "$CONFIG" ]         && set -- "$@" -config "$CONFIG"
+[ -n "$PASSWORD" ]       && set -- "$@" -pass "$PASSWORD"
+[ -n "$MOTD" ]           && set -- "$@" -motd "$MOTD"
+[ -n "$LOGFORMAT" ]      && set -- "$@" -logformat "$LOGFORMAT"
+[ -n "$WORLD_EVIL" ]     && set -- "$@" -worldevil "$WORLD_EVIL"
+[ -n "$DIFFICULTY" ]     && set -- "$@" -difficulty "$DIFFICULTY"
 
-[ -n "$IP" ] && ARGS="$ARGS -ip $IP"
-[ -n "$PORT" ] && ARGS="$ARGS -port $PORT"
-[ -n "$MAXPLAYERS" ] && ARGS="$ARGS -maxplayers $MAXPLAYERS"
-[ -n "$WORLD" ] && ARGS="$ARGS -world $WORLDSELECTPATH/$WORLD"
-[ -n "$WORLDNAME" ] && ARGS="$ARGS -worldname $WORLDNAME"
-[ -n "$AUTOCREATE" ] && ARGS="$ARGS -autocreate $AUTOCREATE"
-[ -n "$CONFIG" ] && ARGS="$ARGS -config $CONFIG"
-[ -n "$PASSWORD" ] && ARGS="$ARGS -pass $PASSWORD"
-[ -n "$MOTD" ] && ARGS="$ARGS -motd \"$MOTD\""
-[ -n "$LOGFORMAT" ] && ARGS="$ARGS -logformat $LOGFORMAT"
-[ -n "$WORLD_EVIL" ] && ARGS="$ARGS -worldevil $WORLD_EVIL"
-[ -n "$DIFFICULTY" ] && ARGS="$ARGS -difficulty $DIFFICULTY"
+[ "$IGNOREVERSION" = "true" ] && set -- "$@" -ignoreversion
+[ "$FORCEUPDATE"   = "true" ] && set -- "$@" -forceupdate
+[ "$AUTOSHUTDOWN"  = "true" ] && set -- "$@" -autoshutdown
+[ "$SECURE"        = "true" ] && set -- "$@" -secure
+[ "$LOGCLEAR"      = "true" ] && set -- "$@" -logclear
 
-[ "$(validate_boolean "$IGNOREVERSION")" == "true" ] && ARGS="$ARGS -ignoreversion"
-[ "$(validate_boolean "$FORCEUPDATE")" == "true" ] && ARGS="$ARGS -forceupdate"
-[ "$(validate_boolean "$AUTOSHUTDOWN")" == "true" ] && ARGS="$ARGS -autoshutdown"
-[ "$(validate_boolean "$SECURE")" == "true" ] && ARGS="$ARGS -secure"
-[ "$(validate_boolean "$LOGCLEAR")" == "true" ] && ARGS="$ARGS -logclear"
+echo "Starting TShock $TSHOCKVERSION (Terraria $TERRARIA_VERSION)"
 
-# Add any additional arguments passed to the container
-ARGS="$ARGS $@"
-
-echo "Starting TShock server with arguments: $ARGS"
-
-# Ensure the TShock directory exists, then execute the TShock server from the /tshock directory
-[ -d "/tshock" ] || {
-    echo "Error: /tshock directory does not exist! Creating it..."
-    mkdir -p /tshock
-}
-
-exec /tshock/TShock.Server $ARGS
+exec /tshock/TShock.Server "$@"
