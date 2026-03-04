@@ -1,0 +1,5 @@
+# Ignore everything except what's explicitly needed
+*
+
+# Allow the entrypoint script
+!entrypoint.sh
