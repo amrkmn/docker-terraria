@@ -3,49 +3,74 @@ FROM --platform=${BUILDPLATFORM} alpine:3.21.0 AS base
 # Install dependencies
 RUN apk add --no-cache curl unzip
 
-# Add the bootstrap file
-COPY entrypoint.sh /server/entrypoint.sh
-
-# Make TARGETPLATFORM available to the build stage
-ARG TARGETPLATFORM
-
 # Terraria server version (override at build time with --build-arg DL_VERSION=...)
 ARG DL_VERSION=1449
 
-ENV DL_LINK=https://terraria.org/api/download/pc-dedicated-server/terraria-server-${DL_VERSION}.zip
-ENV DL_FILE=terraria-server-${DL_VERSION}.zip
-
 # Download and extract only required files
-# The official Terraria server only ships a Linux x86_64 native binary.
-# On ARM64, mono TerrariaServer.exe is used instead (handled by entrypoint.sh).
-RUN curl -fsSL "$DL_LINK" -o "/$DL_FILE" && \
-    unzip "/$DL_FILE" -d /terraria && \
-    mv $(find /terraria -type d -name Linux)/* /server && \
+RUN curl -fsSL "https://terraria.org/api/download/pc-dedicated-server/terraria-server-${DL_VERSION}.zip" \
+        -o /terraria-server.zip && \
+    unzip /terraria-server.zip -d /terraria && \
+    mv $(find /terraria -type d -name Linux)/* /server/ && \
     cp $(find /terraria -type f -name serverconfig.txt | head -n 1) /server/serverconfig-default.txt && \
-    chmod +x /server/entrypoint.sh && \
-    chmod +x /server/TerrariaServer && \
-    chmod +x /server/TerrariaServer.bin.x86_64 && \
-    rm -rf /terraria "/$DL_FILE"
+    chmod +x /server/TerrariaServer /server/TerrariaServer.bin.x86_64 && \
+    rm -rf /terraria /terraria-server.zip
 
-# Use mono:6 (Mono is required — the Terraria server .exe targets .NET Framework,
-# which is not compatible with mcr.microsoft.com/dotnet/runtime)
-FROM mono:6-slim
+# Copy and permission the entrypoint
+COPY entrypoint.sh /server/entrypoint.sh
+RUN chmod +x /server/entrypoint.sh
+
+# Runtime image — debian:bookworm-slim is the upstream base used by the mono project.
+# Mono is installed conditionally at build time for ARM64 only; amd64 uses the native binary.
+FROM debian:bookworm-slim
+
+ARG TARGETARCH
+ARG DL_VERSION=1449
+
+# Bake TARGETARCH into the image so the entrypoint can select the correct binary at runtime
+ENV TARGETARCH=${TARGETARCH}
+ENV DL_VERSION=${DL_VERSION}
+
+# OCI labels
+LABEL org.opencontainers.image.source="https://github.com/amrkmn/docker-terraria"
+LABEL org.opencontainers.image.url="https://github.com/amrkmn/docker-terraria"
+LABEL org.opencontainers.image.description="Terraria vanilla dedicated server"
 
 # Expose server port
 EXPOSE 7777
 
-# Define environment variables
+# Environment variables
 ENV LOGPATH=/data/logs
 ENV WORLDPATH=/data/worlds
-ENV WORLD=""
+ENV WORLD_FILENAME=""
 ENV CONFIGPATH=/data/config
 ENV CONFIG_FILENAME="serverconfig.txt"
 
-# Create data volume
+# On ARM64: install mono-runtime and relocate System.dll from the Terraria bundle into
+# the Mono GAC so the correct version is used (the bundled one is incompatible otherwise).
+# On amd64: no extra dependencies needed — TerrariaServer native ELF is used directly.
+RUN if [ "$TARGETARCH" = "arm64" ] || [ "$TARGETARCH" = "arm" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends ca-certificates mono-runtime && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
+# Copy server files from the build stage
+COPY --from=base /server/ /server/
+
+# On ARM64: relocate System.dll into the Mono GAC after copying server files
+RUN if [ "$TARGETARCH" = "arm64" ] || [ "$TARGETARCH" = "arm" ]; then \
+        mv /server/System.dll /usr/lib/mono/4.5/System.dll; \
+    fi
+
+# Create a non-root user and group, then hand off ownership of all runtime paths
+RUN groupadd --gid 1000 terraria && \
+    useradd --uid 1000 --gid terraria --no-create-home --shell /usr/sbin/nologin terraria && \
+    mkdir -p /data && \
+    chown -R terraria:terraria /server /data
+
+USER terraria
+
 VOLUME ["/data"]
 
-# Copy only required files from the build stage
-COPY --from=base /server/ /server/
 WORKDIR /server
-
 ENTRYPOINT ["/bin/sh", "/server/entrypoint.sh"]

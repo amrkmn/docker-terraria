@@ -1,36 +1,34 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
-echo "Bootstrap:"
-echo "world=$WORLD"
-echo "logpath=$LOGPATH"
+# Select the correct server binary based on architecture.
+# On ARM64/ARM: use mono with TerrariaServer.exe (no native binary available).
+# On amd64: use the native TerrariaServer ELF directly.
+if [ "$TARGETARCH" = "arm64" ] || [ "$TARGETARCH" = "arm" ]; then
+    set -- mono TerrariaServer.exe
+else
+    set -- ./TerrariaServer
+fi
 
-# Define paths
-WORLD_PATH="$WORLDPATH/$WORLD"
-
-# Check for server configuration
+# Ensure config directory exists and has a config file
+mkdir -p "$CONFIGPATH"
 if [ ! -f "$CONFIGPATH/$CONFIG_FILENAME" ]; then
-    echo "Server configuration not found, running with default server configuration."
-    echo "Please ensure your desired $CONFIG_FILENAME file is volumed into Docker: -v <path_to_config_file>:$CONFIGPATH"
+    echo "No config file found at $CONFIGPATH/$CONFIG_FILENAME — copying default."
+    echo "Mount your own config with: -v <path>:$CONFIGPATH"
     cp ./serverconfig-default.txt "$CONFIGPATH/$CONFIG_FILENAME"
 fi
 
-# Handle world file
-if [ -z "$WORLD" ]; then
-    echo "No world file specified in environment WORLD."
-    if [ -z "$@" ]; then
-        echo "Running server setup without additional arguments..."
-    else
-        echo "Running server with command flags: $@"
-    fi
-    mono TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" "$@"
+# Launch the server
+if [ -z "$WORLD_FILENAME" ]; then
+    # No world specified — start in interactive/setup mode
+    exec "$@" -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH"
 else
-    echo "Environment WORLD specified"
+    WORLD_PATH="$WORLDPATH/$WORLD_FILENAME"
     if [ -f "$WORLD_PATH" ]; then
-        echo "Loading world file: $WORLD..."
-        mono --server --gc=sgen -O=all TerrariaServer.exe -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -world "$WORLD_PATH" "$@"
+        exec "$@" -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -world "$WORLD_PATH"
     else
-        echo "Unable to locate world file at $WORLD_PATH."
-        echo "Please ensure your world file is volumed into Docker: -v <path_to_world_file>:$WORLDPATH"
+        echo "Error: world file not found at $WORLD_PATH"
+        echo "Mount your world with: -v <path>:$WORLDPATH"
         exit 1
     fi
 fi
