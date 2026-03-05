@@ -1,171 +1,169 @@
 name: Docker
 
 on:
-  push:
-    tags:
-      - "vanilla-*"
-      - "tshock-*"
-  workflow_dispatch:
-    inputs:
-      image:
-        description: "Which image to build"
-        required: true
-        type: choice
-        options:
-          - vanilla
-          - tshock
-      vanilla_version:
-        description: "Terraria version (e.g. 1.4.4.9) — required when image is vanilla"
-        required: false
-      tshock_version:
-        description: "TShock version (e.g. 5.2.3) — required when image is tshock"
-        required: false
-      terraria_version:
-        description: "Terraria version targeted by TShock (e.g. 1.4.4.9) — required when image is tshock"
-        required: false
+    push:
+        tags:
+            - "vanilla-*"
+            - "tshock-*"
+    workflow_dispatch:
+        inputs:
+            image:
+                description: "Which image to build"
+                required: true
+                type: choice
+                options:
+                    - vanilla
+                    - tshock
+            vanilla_version:
+                description: "Terraria version (e.g. 1.4.4.9) — required when image is vanilla"
+                required: false
+            tshock_version:
+                description: "TShock version (e.g. 5.2.3) — required when image is tshock"
+                required: false
+            terraria_version:
+                description: "Terraria version targeted by TShock (e.g. 1.4.4.9) — required when image is tshock"
+                required: false
+
+permissions:
+    contents: write
+    packages: write
 
 jobs:
-  vanilla:
-    name: Build vanilla
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/vanilla-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'vanilla')
-    permissions:
-      contents: write
-      packages: write
+    vanilla:
+        name: Build vanilla
+        runs-on: ubuntu-latest
+        if: startsWith(github.ref, 'refs/tags/vanilla-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'vanilla')
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Parse version from tag or input
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            DOTTED="${{ inputs.vanilla_version }}"
-          else
-            # tag is vanilla-1.4.4.9 → strip prefix
-            DOTTED="${GITHUB_REF_NAME#vanilla-}"
-          fi
-          # 1.4.4.9 → 1449 (strip all dots)
-          DL_VERSION="${DOTTED//./}"
-          echo "dotted=$DOTTED" >> "$GITHUB_OUTPUT"
-          echo "dl_version=$DL_VERSION" >> "$GITHUB_OUTPUT"
+            - name: Parse version from tag or input
+              id: version
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    DOTTED="${{ inputs.vanilla_version }}"
+                  else
+                    # tag is vanilla-1.4.4.9 → strip prefix
+                    DOTTED="${GITHUB_REF_NAME#vanilla-}"
+                  fi
+                  # 1.4.4.9 → 1449 (strip all dots)
+                  DL_VERSION="${DOTTED//./}"
+                  echo "dotted=$DOTTED" >> "$GITHUB_OUTPUT"
+                  echo "dl_version=$DL_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Update ARG defaults in Dockerfile
-        run: |
-          sed -i "s/^ARG DL_VERSION=.*/ARG DL_VERSION=${{ steps.version.outputs.dl_version }}/" vanilla/Dockerfile
+            - name: Update ARG defaults in Dockerfile
+              run: |
+                  sed -i "s/^ARG DL_VERSION=.*/ARG DL_VERSION=${{ steps.version.outputs.dl_version }}/" vanilla/Dockerfile
 
-      - name: Commit updated Dockerfile
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git add vanilla/Dockerfile
-          git diff --cached --quiet || git commit -m "chore(vanilla): bump version to ${{ steps.version.outputs.dotted }}"
-          git pull --rebase origin main
-          git push origin HEAD:main
+            - name: Commit updated Dockerfile
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+                  git add vanilla/Dockerfile
+                  git diff --cached --quiet || git commit -m "chore(vanilla): bump version to ${{ steps.version.outputs.dotted }}"
+                  git pull --rebase origin main
+                  git push origin HEAD:main
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push vanilla
-        uses: docker/build-push-action@v6
-        with:
-          context: ./vanilla
-          file: ./vanilla/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: |
-            DL_VERSION=${{ steps.version.outputs.dl_version }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/terraria:latest
-            ghcr.io/${{ github.repository_owner }}/terraria:${{ steps.version.outputs.dotted }}
-            ghcr.io/${{ github.repository_owner }}/terraria/vanilla:latest
-            ghcr.io/${{ github.repository_owner }}/terraria/vanilla:${{ steps.version.outputs.dotted }}
-          cache-from: type=gha,scope=vanilla
-          cache-to: type=gha,scope=vanilla,mode=max
+            - name: Build and push vanilla
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./vanilla
+                  file: ./vanilla/Dockerfile
+                  platforms: linux/amd64,linux/arm64
+                  push: true
+                  build-args: |
+                      DL_VERSION=${{ steps.version.outputs.dl_version }}
+                  tags: |
+                      ghcr.io/${{ github.repository_owner }}/terraria:latest
+                      ghcr.io/${{ github.repository_owner }}/terraria:${{ steps.version.outputs.dotted }}
+                      ghcr.io/${{ github.repository_owner }}/terraria/vanilla:latest
+                      ghcr.io/${{ github.repository_owner }}/terraria/vanilla:${{ steps.version.outputs.dotted }}
+                  cache-from: type=gha,scope=vanilla
+                  cache-to: type=gha,scope=vanilla,mode=max
 
-  tshock:
-    name: Build tshock
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/tshock-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'tshock')
-    permissions:
-      contents: write
-      packages: write
+    tshock:
+        name: Build tshock
+        runs-on: ubuntu-latest
+        if: startsWith(github.ref, 'refs/tags/tshock-') || (github.event_name == 'workflow_dispatch' && inputs.image == 'tshock')
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Parse versions from tag or input
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TERRARIA="${{ inputs.terraria_version }}"
-            TSHOCK="${{ inputs.tshock_version }}"
-          else
-            # tag is tshock-1.4.4.9-5.2.3 → strip prefix, split on first hyphen
-            COMBINED="${GITHUB_REF_NAME#tshock-}"
-            # COMBINED = 1.4.4.9-5.2.3; terraria version has 3 dots, tshock has 2
-            # Split: everything up to the last hyphen = terraria, remainder = tshock
-            TERRARIA="${COMBINED%-*}"
-            TSHOCK="${COMBINED##*-}"
-          fi
-          echo "terraria=$TERRARIA" >> "$GITHUB_OUTPUT"
-          echo "tshock=$TSHOCK" >> "$GITHUB_OUTPUT"
-          echo "combined=${TERRARIA}-${TSHOCK}" >> "$GITHUB_OUTPUT"
+            - name: Parse versions from tag or input
+              id: version
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    TERRARIA="${{ inputs.terraria_version }}"
+                    TSHOCK="${{ inputs.tshock_version }}"
+                  else
+                    # tag is tshock-1.4.4.9-5.2.3 → strip prefix, split on first hyphen
+                    COMBINED="${GITHUB_REF_NAME#tshock-}"
+                    # COMBINED = 1.4.4.9-5.2.3; terraria version has 3 dots, tshock has 2
+                    # Split: everything up to the last hyphen = terraria, remainder = tshock
+                    TERRARIA="${COMBINED%-*}"
+                    TSHOCK="${COMBINED##*-}"
+                  fi
+                  echo "terraria=$TERRARIA" >> "$GITHUB_OUTPUT"
+                  echo "tshock=$TSHOCK" >> "$GITHUB_OUTPUT"
+                  echo "combined=${TERRARIA}-${TSHOCK}" >> "$GITHUB_OUTPUT"
 
-      - name: Update ARG defaults in Dockerfile
-        run: |
-          sed -i "s/^ARG TSHOCKVERSION=.*/ARG TSHOCKVERSION=${{ steps.version.outputs.tshock }}/" tshock/Dockerfile
-          sed -i "s/^ARG TERRARIA_VERSION=.*/ARG TERRARIA_VERSION=${{ steps.version.outputs.terraria }}/" tshock/Dockerfile
+            - name: Update ARG defaults in Dockerfile
+              run: |
+                  sed -i "s/^ARG TSHOCKVERSION=.*/ARG TSHOCKVERSION=${{ steps.version.outputs.tshock }}/" tshock/Dockerfile
+                  sed -i "s/^ARG TERRARIA_VERSION=.*/ARG TERRARIA_VERSION=${{ steps.version.outputs.terraria }}/" tshock/Dockerfile
 
-      - name: Commit updated Dockerfile
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git add tshock/Dockerfile
-          git diff --cached --quiet || git commit -m "chore(tshock): bump version to ${{ steps.version.outputs.combined }}"
-          git pull --rebase origin main
-          git push origin HEAD:main
+            - name: Commit updated Dockerfile
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+                  git add tshock/Dockerfile
+                  git diff --cached --quiet || git commit -m "chore(tshock): bump version to ${{ steps.version.outputs.combined }}"
+                  git pull --rebase origin main
+                  git push origin HEAD:main
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push tshock
-        uses: docker/build-push-action@v6
-        with:
-          context: ./tshock
-          file: ./tshock/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: |
-            TSHOCKVERSION=${{ steps.version.outputs.tshock }}
-            TERRARIA_VERSION=${{ steps.version.outputs.terraria }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/terraria/tshock:latest
-            ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.tshock }}
-            ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.combined }}
-          cache-from: type=gha,scope=tshock
-          cache-to: type=gha,scope=tshock,mode=max
+            - name: Build and push tshock
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./tshock
+                  file: ./tshock/Dockerfile
+                  platforms: linux/amd64,linux/arm64
+                  push: true
+                  build-args: |
+                      TSHOCKVERSION=${{ steps.version.outputs.tshock }}
+                      TERRARIA_VERSION=${{ steps.version.outputs.terraria }}
+                  tags: |
+                      ghcr.io/${{ github.repository_owner }}/terraria/tshock:latest
+                      ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.tshock }}
+                      ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.combined }}
+                  cache-from: type=gha,scope=tshock
+                  cache-to: type=gha,scope=tshock,mode=max
