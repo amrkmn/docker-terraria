@@ -68,7 +68,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # Must be up to date with remote
-git fetch origin main --quiet
+git fetch origin main --tags --quiet
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 if [ "$LOCAL" != "$REMOTE" ]; then
@@ -76,9 +76,13 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     exit 1
 fi
 
-# Tag must not already exist
+# Tag must not already exist locally or on remote
 if git rev-parse "$TAG" >/dev/null 2>&1; then
-    echo "Error: tag '$TAG' already exists."
+    echo "Error: tag '$TAG' already exists locally."
+    exit 1
+fi
+if git ls-remote --tags origin "refs/tags/$TAG" | grep -qF "refs/tags/$TAG"; then
+    echo "Error: tag '$TAG' already exists on remote."
     exit 1
 fi
 
