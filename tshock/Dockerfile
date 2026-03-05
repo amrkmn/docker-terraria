@@ -5,7 +5,7 @@ RUN apk add --no-cache curl unzip
 
 # TShock and Terraria target versions (override at build time).
 # Set TSHOCKVERSION=latest to always pull the newest release.
-ARG TSHOCKVERSION=5.2.3
+ARG TSHOCKVERSION=5.2.4
 ARG TERRARIA_VERSION=1.4.4.9
 
 # Copy and permission the entrypoint
@@ -41,7 +41,7 @@ RUN set -eux; \
 # Runtime image — .NET 8.0 LTS (EOL Nov 2026)
 FROM mcr.microsoft.com/dotnet/runtime:8.0
 
-ARG TSHOCKVERSION=5.2.3
+ARG TSHOCKVERSION=5.2.4
 ARG TERRARIA_VERSION=1.4.4.9
 
 # OCI labels
