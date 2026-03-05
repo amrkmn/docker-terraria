@@ -26,6 +26,7 @@ Docker images for running a [Terraria](https://terraria.org) dedicated server â€
 ```sh
 docker run -d \
   --name terraria \
+  -it \
   -p 7777:7777 \
   -v ./data:/data \
   -e WORLD_FILENAME=myworld.wld \
@@ -37,6 +38,7 @@ docker run -d \
 ```sh
 docker run -d \
   --name terraria \
+  -it \
   -p 7777:7777 \
   -p 7878:7878 \
   -v ./data:/data \
@@ -50,13 +52,17 @@ docker run -d \
 services:
   terraria:
     image: ghcr.io/amrkmn/terraria/vanilla:latest
+    container_name: terraria
+    stdin_open: true
+    tty: true
+    environment:
+      WORLD_FILENAME: myworld.wld
     ports:
       - "7777:7777"
     volumes:
       - ./data:/data
-    environment:
-      WORLD_FILENAME: myworld.wld
     restart: unless-stopped
+
 ```
 
 ## Configuration
