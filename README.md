@@ -1,29 +1,25 @@
 # docker-terraria
 
-<p align="center">
-  <a href="https://github.com/amrkmn/docker-terraria/pkgs/container/terraria"><img alt="vanilla" src="https://img.shields.io/badge/image-vanilla-blue?logo=docker"></a>
-  <a href="https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Ftshock"><img alt="tshock" src="https://img.shields.io/badge/image-tshock-purple?logo=docker"></a>
-  <a href="https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml"><img alt="CI" src="https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml/badge.svg"></a>
-</p>
+[![Vanilla](https://ghcr-badge.egpl.dev/amrkmn/terraria/vanilla/latest_tag?trim=major&label=vanilla&color=blue)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Fvanilla)
+[![TShock](https://ghcr-badge.egpl.dev/amrkmn/terraria/tshock/latest_tag?trim=major&label=tshock&color=purple)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Ftshock)
+[![CI](https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml/badge.svg)](https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml)
 
-Docker images for running [Terraria](https://terraria.org) dedicated servers — both vanilla and [TShock](https://github.com/Pryaxis/TShock)-modded. Multi-arch builds for `linux/amd64` and `linux/arm64`.
+Docker images for running a [Terraria](https://terraria.org) dedicated server — vanilla or with [TShock](https://tshock.co) — on `linux/amd64` and `linux/arm64`.
 
 ## Images
 
-| Image | Registry |
+| Image | Description |
 |---|---|
-| Vanilla | `ghcr.io/amrkmn/terraria` |
-| Vanilla (explicit) | `ghcr.io/amrkmn/terraria/vanilla` |
-| TShock | `ghcr.io/amrkmn/terraria/tshock` |
+| `ghcr.io/amrkmn/terraria/vanilla` | Vanilla Terraria server |
+| `ghcr.io/amrkmn/terraria/tshock` | TShock-modded Terraria server |
 
 ### Tags
 
-- `latest` — most recent build
-- `1.4.4.9` — specific Terraria version (vanilla)
-- `5.2.3` — specific TShock version
-- `1.4.4.9-5.2.3` — Terraria + TShock version pinned together
+**Vanilla:** `latest`, `1.4.5.0`
 
-## Usage
+**TShock:** `latest`, `5.2.3`, `1.4.4.9-5.2.3`
+
+## Quick start
 
 ### Vanilla
 
@@ -31,113 +27,115 @@ Docker images for running [Terraria](https://terraria.org) dedicated servers —
 docker run -d \
   --name terraria \
   -p 7777:7777 \
-  -v /path/to/data:/data \
-  -e WORLD_FILENAME="MyWorld.wld" \
-  ghcr.io/amrkmn/terraria:latest
+  -v ./data:/data \
+  -e WORLD_FILENAME=myworld.wld \
+  ghcr.io/amrkmn/terraria/vanilla:latest
 ```
 
 ### TShock
 
 ```sh
 docker run -d \
-  --name terraria-tshock \
+  --name terraria \
   -p 7777:7777 \
   -p 7878:7878 \
-  -v /path/to/data:/data \
-  -e WORLD_FILENAME="MyWorld.wld" \
+  -v ./data:/data \
+  -e WORLD_FILENAME=myworld.wld \
   ghcr.io/amrkmn/terraria/tshock:latest
 ```
-
-> [!TIP]
-> Port `7878` is the TShock REST API. You can omit it if you don't need remote management.
 
 ### Docker Compose
 
 ```yaml
 services:
   terraria:
-    image: ghcr.io/amrkmn/terraria:latest
+    image: ghcr.io/amrkmn/terraria/vanilla:latest
     ports:
       - "7777:7777"
     volumes:
       - ./data:/data
     environment:
-      WORLD_FILENAME: "MyWorld.wld"
+      WORLD_FILENAME: myworld.wld
     restart: unless-stopped
 ```
 
-## Environment Variables
+## Configuration
 
-### Vanilla
+### Vanilla environment variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `WORLD_FILENAME` | _(empty)_ | World filename (e.g. `MyWorld.wld`). If unset, server starts in interactive setup mode. |
+| `WORLD_FILENAME` | _(empty)_ | World file name (e.g. `myworld.wld`). If unset, server starts in interactive mode. |
 | `WORLDPATH` | `/data/worlds` | Directory where world files are stored. |
-| `CONFIGPATH` | `/data/config` | Directory for the server config file. |
-| `CONFIG_FILENAME` | `serverconfig.txt` | Server config filename. |
-| `LOGPATH` | `/data/logs` | Directory for server logs. |
+| `CONFIGPATH` | `/data/config` | Directory for config files. |
+| `CONFIG_FILENAME` | `serverconfig.txt` | Server config file name. |
+| `LOGPATH` | `/data/logs` | Directory for log output. |
 
-### TShock
+### TShock environment variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `WORLD_FILENAME` | _(empty)_ | World filename to load on startup. |
-| `WORLDNAME` | _(empty)_ | Name for a newly auto-created world. |
-| `AUTOCREATE` | _(empty)_ | World size for auto-creation: `1` (small), `2` (medium), `3` (large). |
-| `PORT` | _(empty)_ | Server port (default `7777`). |
+| `WORLD_FILENAME` | _(empty)_ | World file name (e.g. `myworld.wld`). If unset, server starts in interactive mode. |
+| `WORLDNAME` | _(empty)_ | Name of the world to auto-create. |
+| `AUTOCREATE` | _(empty)_ | World size to auto-create: `1` (small), `2` (medium), `3` (large). |
+| `PORT` | _(empty)_ | Port to listen on (default `7777`). |
 | `MAXPLAYERS` | _(empty)_ | Maximum number of players. |
 | `PASSWORD` | _(empty)_ | Server password. |
 | `MOTD` | _(empty)_ | Message of the day. |
 | `DIFFICULTY` | _(empty)_ | World difficulty: `0` (normal), `1` (expert), `2` (master), `3` (journey). |
 | `WORLD_EVIL` | _(empty)_ | World evil type: `0` (random), `1` (corruption), `2` (crimson). |
-| `IP` | _(empty)_ | IP address to bind to. |
-| `CONFIGPATH` | `/data/config` | Directory for TShock config files. |
-| `LOGPATH` | `/data/logs` | Directory for logs. |
-| `CRASHDIR` | `/data/crashes` | Directory for crash reports. |
+| `IP` | _(empty)_ | Bind to a specific IP address. |
+| `CONFIGPATH` | `/data/config` | Directory for config files. |
+| `LOGPATH` | `/data/logs` | Directory for log output. |
+| `CRASHDIR` | `/data/crashes` | Directory for crash dumps. |
 | `WORLDSELECTPATH` | `/data/worlds` | Directory where world files are stored. |
 | `ADDITIONALPLUGINS` | `/data/plugins` | Directory for additional TShock plugins. |
-| `SECURE` | `false` | Enable VAC-style anti-cheat. |
-| `AUTOSHUTDOWN` | `false` | Shutdown server when last player leaves. |
-| `FORCEUPDATE` | `false` | Force server updates even without players. |
-| `IGNOREVERSION` | `false` | Ignore version checks. |
-| `LOGCLEAR` | `false` | Clear logs on startup. |
+| `SECURE` | _(empty)_ | Set to `true` to enable VAC-style cheat protection. |
+| `AUTOSHUTDOWN` | _(empty)_ | Set to `true` to shut down when the last player leaves. |
+| `FORCEUPDATE` | _(empty)_ | Set to `true` to force world updates even with no players. |
+| `IGNOREVERSION` | _(empty)_ | Set to `true` to ignore TShock version checks. |
+| `LOGCLEAR` | _(empty)_ | Set to `true` to clear log files on startup. |
 
-## Data Volume
+## Data volume
 
-Both images use `/data` as the base volume. Mount a host directory there to persist your worlds, config, and logs across container restarts.
+All persistent data lives under `/data`:
 
 ```
-/data
-├── config/       # Server configuration files
-├── worlds/       # World files (.wld)
-├── logs/         # Server logs
-├── crashes/      # TShock crash reports (tshock only)
-└── plugins/      # Additional plugins (tshock only)
+/data/
+├── config/       # Server and TShock config files
+├── worlds/       # World save files
+├── logs/         # Log output
+├── crashes/      # Crash dumps (TShock only)
+└── plugins/      # Additional TShock plugins (TShock only)
 ```
 
 > [!NOTE]
-> On first run, if no config file is found, the vanilla image will copy a default `serverconfig.txt` into `/data/config` automatically.
-
-> [!NOTE]
-> On first run, the TShock image will seed `/data/plugins` with the default bundled plugins. Add your own plugins to the same directory.
+> On first run, the vanilla server copies a default `serverconfig.txt` into `/data/config` if none exists. TShock seeds default plugins into `/data/plugins` from the image snapshot.
 
 > [!IMPORTANT]
-> Both images run as a non-root user with UID/GID `1000`. If you bind-mount a host directory (e.g. `-v /host/path:/data`), ensure it is owned by UID `1000`, otherwise the server will fail to write logs and world files:
+> The container runs as user `terraria` (UID/GID `1000`). If you mount a host directory as `/data`, ensure it is writable by UID `1000`:
 > ```sh
-> sudo chown -R 1000:1000 /host/path
+> chown -R 1000:1000 ./data
 > ```
 
-## Releasing a New Version
+## ARM64 support
 
-Use the included `release.sh` script to tag and trigger a new build:
+The vanilla image uses `mono` to run `TerrariaServer.exe` on `arm64` (since Terraria only ships a native `x86_64` binary). The correct runtime is selected automatically at container startup.
+
+## TShock plugins
+
+The TShock image snapshots the default plugins bundled with TShock into `/tshock-plugins` at build time. On first run, if `/data/plugins` is empty, the default plugins are copied there. To add custom plugins, place `.dll` files in your `/data/plugins` mount.
+
+## Releasing
+
+Use `release.sh` to tag and trigger a new build:
 
 ```sh
 # Vanilla
-./release.sh vanilla 1.4.4.9
+./release.sh vanilla 1.4.5.0
 
-# TShock
-./release.sh tshock 1.4.4.9 5.2.3
+# TShock (tshock-version terraria-version)
+./release.sh tshock 5.2.3 1.4.4.9
 ```
 
-The script validates your input and git state, creates the tag, and pushes it to GitHub. The Actions workflow then updates the Dockerfile, builds multi-arch images, and pushes them to the registry automatically.
+This validates your branch is up to date, checks for duplicate tags locally and remotely, creates the tag, and pushes it to trigger the GitHub Actions workflow.
