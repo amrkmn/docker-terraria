@@ -1,7 +1,7 @@
 # docker-terraria
 
-[![Vanilla](https://ghcr-badge.egpl.dev/amrkmn/terraria/vanilla/latest_tag?trim=major&label=vanilla&color=blue)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Fvanilla)
-[![TShock](https://ghcr-badge.egpl.dev/amrkmn/terraria/tshock/latest_tag?trim=major&label=tshock&color=purple)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Ftshock)
+[![Vanilla](https://img.shields.io/github/v/tag/amrkmn/docker-terraria?filter=vanilla-*&label=vanilla&color=blue)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Fvanilla)
+[![TShock](https://img.shields.io/github/v/tag/amrkmn/docker-terraria?filter=tshock-*&label=tshock&color=purple)](https://github.com/amrkmn/docker-terraria/pkgs/container/terraria%2Ftshock)
 [![CI](https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml/badge.svg)](https://github.com/amrkmn/docker-terraria/actions/workflows/docker.yml)
 
 Docker images for running a [Terraria](https://terraria.org) dedicated server — vanilla or with [TShock](https://tshock.co) — on `linux/amd64` and `linux/arm64`.
