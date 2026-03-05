@@ -10,8 +10,10 @@ ARG DL_VERSION=1450
 RUN curl -fsSL "https://terraria.org/api/download/pc-dedicated-server/terraria-server-${DL_VERSION}.zip" \
         -o /terraria-server.zip && \
     unzip /terraria-server.zip -d /terraria && \
-    mv $(find /terraria -type d -name Linux)/* /server/ && \
-    cp $(find /terraria -type f -name serverconfig.txt | head -n 1) /server/serverconfig-default.txt && \
+    LINUX_DIR=$(find /terraria -type d \( -iname "linux" \) | head -n 1) && \
+    mkdir -p /server && \
+    mv "$LINUX_DIR"/* /server/ && \
+    cp "$(find /terraria -type f -iname 'serverconfig.txt' | head -n 1)" /server/serverconfig-default.txt && \
     chmod +x /server/TerrariaServer /server/TerrariaServer.bin.x86_64 && \
     rm -rf /terraria /terraria-server.zip
 
