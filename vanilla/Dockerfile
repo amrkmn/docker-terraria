@@ -4,7 +4,7 @@ FROM --platform=${BUILDPLATFORM} alpine:3.21.0 AS base
 RUN apk add --no-cache curl unzip
 
 # Terraria server version (override at build time with --build-arg DL_VERSION=...)
-ARG DL_VERSION=1454
+ARG DL_VERSION=1455
 
 # Download and extract only required files
 RUN curl -fsSL "https://terraria.org/api/download/pc-dedicated-server/terraria-server-${DL_VERSION}.zip" \
@@ -26,7 +26,7 @@ RUN chmod +x /server/entrypoint.sh
 FROM debian:bookworm-slim
 
 ARG TARGETARCH
-ARG DL_VERSION=1454
+ARG DL_VERSION=1455
 
 # Bake TARGETARCH into the image so the entrypoint can select the correct binary at runtime
 ENV TARGETARCH=${TARGETARCH}
