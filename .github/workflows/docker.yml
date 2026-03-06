@@ -17,12 +17,20 @@ on:
             vanilla_version:
                 description: "Terraria version (e.g. 1.4.4.9) — required when image is vanilla"
                 required: false
+            vanilla_seq:
+                description: "Build sequence number for vanilla (default: 1)"
+                required: false
+                default: "1"
             tshock_version:
                 description: "TShock version (e.g. 5.2.3) — required when image is tshock"
                 required: false
             terraria_version:
                 description: "Terraria version targeted by TShock (e.g. 1.4.4.9) — required when image is tshock"
                 required: false
+            tshock_seq:
+                description: "Build sequence number for tshock (default: 1)"
+                required: false
+                default: "1"
 
 permissions:
     contents: write
@@ -43,14 +51,25 @@ jobs:
               run: |
                   if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                     DOTTED="${{ inputs.vanilla_version }}"
+                    SEQ="${{ inputs.vanilla_seq }}"
                   else
-                    # tag is vanilla-1.4.4.9 → strip prefix
-                    DOTTED="${GITHUB_REF_NAME#vanilla-}"
+                    # tag is vanilla-1.4.4.9 or vanilla-1.4.4.9-2 → strip prefix
+                    STRIPPED="${GITHUB_REF_NAME#vanilla-}"
+                    # check if last segment is a plain integer (sequence number)
+                    LAST="${STRIPPED##*-}"
+                    if [[ "$LAST" =~ ^[0-9]+$ ]] && [[ "$STRIPPED" == *-* ]]; then
+                      DOTTED="${STRIPPED%-*}"
+                      SEQ="$LAST"
+                    else
+                      DOTTED="$STRIPPED"
+                      SEQ=1
+                    fi
                   fi
                   # 1.4.4.9 → 1449 (strip all dots)
                   DL_VERSION="${DOTTED//./}"
                   echo "dotted=$DOTTED" >> "$GITHUB_OUTPUT"
                   echo "dl_version=$DL_VERSION" >> "$GITHUB_OUTPUT"
+                  echo "seq=$SEQ" >> "$GITHUB_OUTPUT"
 
             - name: Update ARG defaults in Dockerfile
               run: |
@@ -91,6 +110,7 @@ jobs:
                   tags: |
                       ghcr.io/${{ github.repository_owner }}/terraria/vanilla:latest
                       ghcr.io/${{ github.repository_owner }}/terraria/vanilla:${{ steps.version.outputs.dotted }}
+                      ghcr.io/${{ github.repository_owner }}/terraria/vanilla:${{ steps.version.outputs.dotted }}-${{ steps.version.outputs.seq }}
                   cache-from: type=gha,scope=vanilla
                   cache-to: type=gha,scope=vanilla,mode=max
 
@@ -109,17 +129,26 @@ jobs:
                   if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                     TERRARIA="${{ inputs.terraria_version }}"
                     TSHOCK="${{ inputs.tshock_version }}"
+                    SEQ="${{ inputs.tshock_seq }}"
                   else
-                    # tag is tshock-1.4.4.9-5.2.3 → strip prefix, split on first hyphen
+                    # tag is tshock-1.4.4.9-5.2.3 or tshock-1.4.4.9-5.2.3-2 → strip prefix
                     COMBINED="${GITHUB_REF_NAME#tshock-}"
+                    # check if last segment is a plain integer (sequence number)
+                    LAST="${COMBINED##*-}"
+                    if [[ "$LAST" =~ ^[0-9]+$ ]]; then
+                      COMBINED="${COMBINED%-*}"
+                      SEQ="$LAST"
+                    else
+                      SEQ=1
+                    fi
                     # COMBINED = 1.4.4.9-5.2.3; terraria version has 3 dots, tshock has 2
-                    # Split: everything up to the last hyphen = terraria, remainder = tshock
                     TERRARIA="${COMBINED%-*}"
                     TSHOCK="${COMBINED##*-}"
                   fi
                   echo "terraria=$TERRARIA" >> "$GITHUB_OUTPUT"
                   echo "tshock=$TSHOCK" >> "$GITHUB_OUTPUT"
                   echo "combined=${TERRARIA}-${TSHOCK}" >> "$GITHUB_OUTPUT"
+                  echo "seq=$SEQ" >> "$GITHUB_OUTPUT"
 
             - name: Update ARG defaults in Dockerfile
               run: |
@@ -163,5 +192,6 @@ jobs:
                       ghcr.io/${{ github.repository_owner }}/terraria/tshock:latest
                       ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.tshock }}
                       ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.combined }}
+                      ghcr.io/${{ github.repository_owner }}/terraria/tshock:${{ steps.version.outputs.combined }}-${{ steps.version.outputs.seq }}
                   cache-from: type=gha,scope=tshock
                   cache-to: type=gha,scope=tshock,mode=max
