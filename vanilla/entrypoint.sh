@@ -20,8 +20,8 @@ fi
 
 # Launch the server
 if [ -z "$WORLD_FILENAME" ]; then
-    # No world specified — start in interactive/setup mode
-    exec "$@" -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH"
+    echo "No world file specified in environment WORLD_FILENAME."
+    exec "$@" -config "$CONFIGPATH/$CONFIG_FILENAME" -logpath "$LOGPATH" -worldpath "$WORLDPATH"
 else
     WORLD_PATH="$WORLDPATH/$WORLD_FILENAME"
     if [ -f "$WORLD_PATH" ]; then

@@ -1,13 +1,17 @@
 #!/bin/sh
 set -e
 
-# Seed plugins from the baked-in snapshot on first run.
-# /tshock-plugins contains the default plugins from the image.
+# Seed plugins from the baked-in snapshot on first run or when TShock version changes.
+# /app/ServerPlugins contains the default plugins from the image.
 # /data/plugins is the user-facing volume — empty on a fresh mount.
-if [ -z "$(ls -A "$ADDITIONALPLUGINS" 2>/dev/null)" ]; then
+VERSION_FILE="$ADDITIONALPLUGINS/.tshock-version"
+
+if [ -z "$(ls -A "$ADDITIONALPLUGINS" 2>/dev/null)" ] || \
+   [ "$(cat "$VERSION_FILE" 2>/dev/null)" != "$TSHOCK_VERSION" ]; then
     echo "Seeding default plugins into $ADDITIONALPLUGINS"
     mkdir -p "$ADDITIONALPLUGINS"
-    cp -r /tshock-plugins/. "$ADDITIONALPLUGINS/"
+    cp -r /app/ServerPlugins/. "$ADDITIONALPLUGINS/"
+    echo "$TSHOCK_VERSION" > "$VERSION_FILE"
 fi
 
 # Ensure all necessary directories exist
@@ -44,6 +48,6 @@ set -- \
 [ "$SECURE"        = "true" ] && set -- "$@" -secure
 [ "$LOGCLEAR"      = "true" ] && set -- "$@" -logclear
 
-echo "Starting TShock $TSHOCKVERSION (Terraria $TERRARIA_VERSION)"
+echo "Starting TShock $TSHOCK_VERSION (Terraria $TERRARIA_VERSION)"
 
-exec /tshock/TShock.Server "$@"
+exec /app/TShock.Server "$@"

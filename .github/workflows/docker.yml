@@ -152,7 +152,7 @@ jobs:
 
             - name: Update ARG defaults in Dockerfile
               run: |
-                  sed -i "s/^ARG TSHOCKVERSION=.*/ARG TSHOCKVERSION=${{ steps.version.outputs.tshock }}/" tshock/Dockerfile
+                  sed -i "s/^ARG TSHOCK_VERSION=.*/ARG TSHOCK_VERSION=${{ steps.version.outputs.tshock }}/" tshock/Dockerfile
                   sed -i "s/^ARG TERRARIA_VERSION=.*/ARG TERRARIA_VERSION=${{ steps.version.outputs.terraria }}/" tshock/Dockerfile
 
             - name: Commit updated Dockerfile
@@ -186,7 +186,7 @@ jobs:
                   platforms: linux/amd64,linux/arm64
                   push: true
                   build-args: |
-                      TSHOCKVERSION=${{ steps.version.outputs.tshock }}
+                      TSHOCK_VERSION=${{ steps.version.outputs.tshock }}
                       TERRARIA_VERSION=${{ steps.version.outputs.terraria }}
                   tags: |
                       ghcr.io/${{ github.repository_owner }}/terraria/tshock:latest
