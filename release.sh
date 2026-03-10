@@ -2,8 +2,8 @@
 set -e
 
 USAGE="Usage:
-  ./release.sh vanilla <version> [seq]             e.g. ./release.sh vanilla 1.4.4.9 2
-  ./release.sh tshock <terraria> <tshock> [seq]    e.g. ./release.sh tshock 1.4.4.9 5.2.3 2"
+  ./release.sh vanilla <version> [seq]             e.g. ./release.sh vanilla 1.4.5.5 2
+  ./release.sh tshock <terraria> <tshock> [seq]    e.g. ./release.sh tshock 1.4.5.5 6.0.0 2"
 
 IMAGE="$1"
 

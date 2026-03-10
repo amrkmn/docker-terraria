@@ -3,8 +3,8 @@ FROM alpine:3.21.0 AS base
 # Install dependencies
 RUN apk add --no-cache curl unzip
 
-ARG TSHOCK_VERSION=5.2.4
-ARG TERRARIA_VERSION=1.4.4.9
+ARG TSHOCK_VERSION=6.0.0
+ARG TERRARIA_VERSION=1.4.5.5
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
@@ -13,7 +13,7 @@ ARG TARGETARCH
 
 RUN set -eux; \
     case "$TARGETARCH" in \
-        amd64)  ARCH_SUFFIX="amd64" ;; \
+        amd64)  ARCH_SUFFIX="x64" ;; \
         arm64)  ARCH_SUFFIX="arm64" ;; \
         *) echo "Unsupported architecture: $TARGETARCH" && exit 1 ;; \
     esac; \
@@ -32,10 +32,10 @@ RUN set -eux; \
     rm /app.zip; \
     chmod +x /app/TShock.Server
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0
+FROM mcr.microsoft.com/dotnet/runtime:9.0
 
-ARG TSHOCK_VERSION=5.2.4
-ARG TERRARIA_VERSION=1.4.4.9
+ARG TSHOCK_VERSION=6.0.0
+ARG TERRARIA_VERSION=1.4.5.5
 
 LABEL org.opencontainers.image.source="https://github.com/amrkmn/docker-terraria"
 LABEL org.opencontainers.image.url="https://github.com/amrkmn/docker-terraria"
