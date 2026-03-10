@@ -2,7 +2,7 @@ FROM --platform=${BUILDPLATFORM} alpine:3.21.0 AS base
 
 RUN apk add --no-cache curl unzip
 
-ARG DL_VERSION=1455
+ARG DL_VERSION=1456
 
 RUN curl -fsSL "https://terraria.org/api/download/pc-dedicated-server/terraria-server-${DL_VERSION}.zip" \
         -o /terraria-server.zip && \
@@ -20,7 +20,7 @@ RUN chmod +x /app/entrypoint.sh
 FROM debian:bookworm-slim
 
 ARG TARGETARCH
-ARG DL_VERSION=1455
+ARG DL_VERSION=1456
 
 LABEL org.opencontainers.image.source="https://github.com/amrkmn/docker-terraria"
 LABEL org.opencontainers.image.url="https://github.com/amrkmn/docker-terraria"
