@@ -3,8 +3,8 @@ FROM alpine:3.21.0 AS base
 # Install dependencies
 RUN apk add --no-cache curl unzip
 
-ARG TSHOCK_VERSION=6.0.0
-ARG TERRARIA_VERSION=1.4.5.5
+ARG TSHOCK_VERSION=6.1.0
+ARG TERRARIA_VERSION=1.4.5.6
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
@@ -34,8 +34,8 @@ RUN set -eux; \
 
 FROM mcr.microsoft.com/dotnet/runtime:9.0
 
-ARG TSHOCK_VERSION=6.0.0
-ARG TERRARIA_VERSION=1.4.5.5
+ARG TSHOCK_VERSION=6.1.0
+ARG TERRARIA_VERSION=1.4.5.6
 
 LABEL org.opencontainers.image.source="https://github.com/amrkmn/docker-terraria"
 LABEL org.opencontainers.image.url="https://github.com/amrkmn/docker-terraria"
